@@ -18,13 +18,13 @@ There are lots of ways you can contribute, here's some things you can help us wi
  - Tell us your opinions and feature suggestions
 
 ## Development Technologies:
-Manshar is built using [Ruby on Rails](http://rubyonrails.org/) on the backend and [AngualrJS](https://angularjs.org/) on the frontend. We are also using [Postgres](http://www.postgresql.org/) as a DBMS and [PhantomJS](http://phantomjs.org/) as a part of testing the javascript application. Frontend and backend are completely seperated to give you a better chance at contributing to the project if you're familiar with just one technology or if you want to contribute to one of them without wanting to deal with the other.
+Manshar is built using [Ruby on Rails](http://rubyonrails.org/) on the backend and [AngualrJS](https://angularjs.org/) on the frontend. We are also using [PostgreSQL](http://www.postgresql.org/) as a DBMS and [PhantomJS](http://phantomjs.org/) as a part of testing the javascript application. Frontend and backend are completely seperated to give you a better chance at contributing to the project if you're familiar with just one technology or if you want to contribute to one of them without wanting to deal with the other.
 
 To start developing Manshar, you need the following installed in your machine:
 
  - Ruby ≥ 2.0
  - Rails 4.1.8
- - Postgres DBMS
+ - PostgreSQL DBMS
  - PhantomJS
  - NodeJS
 
