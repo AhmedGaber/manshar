@@ -40,7 +40,11 @@ class Article < ActiveRecord::Base
   end
 
   def next
-    Article.public.popular.where('hotness < ?', hotness).first
+    next_article = Article.public.popular.where('hotness < ?', hotness).first
+    if next_article.nil?
+        next_article = Article.public.popular.first
+    end
+    return next_article
   end
 
 end
