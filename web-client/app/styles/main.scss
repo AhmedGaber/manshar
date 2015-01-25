@@ -45,6 +45,14 @@ button {
   cursor: pointer;
 }
 
+button,
+textarea,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  font-family: 'Droid Arabic Naskh', serif !important;
+}
+
 .container{
   @include span-columns(12);
   background-color: #fff;
@@ -106,8 +114,6 @@ button {
 
   .hero-unit {
     height: 100%;
-    vertical-align: middle;
-
     h1 {
       display: inline-block;
       vertical-align: middle;
@@ -220,6 +226,14 @@ button {
           position: absolute;
           top: 1em;
           left: 2em;
+        }
+
+        .author {
+          a {
+            color: #000;
+            font-size: 0.6rem;
+            border-bottom: 1px solid #CBCBCB;
+          }
         }
 
         .actions {
@@ -577,6 +591,7 @@ ul.manshar-articles-list {
   list-style: none;
   word-wrap: break-word;
   background-color: #f9f9f9;
+  margin: 0 auto;
 
   li {
     cursor: pointer;
@@ -670,20 +685,20 @@ ul.manshar-articles-list {
       z-index: 99;
 
       h1 {
-        font-size: 2em;
+        font-size: 1.5em;
         padding: 20px 0 0;
         box-sizing: initial;
       }
 
       h2 {
-        font-size: 1.6em;
+        font-size: 1.1em;
         font-weight: 100;
         color: #fff;
       }
 
       .reading-time {
         color: #fff;
-        font-size: 0.8em;
+        font-size: 0.6em;
         font-weight: bold;
       }
 
@@ -708,7 +723,7 @@ ul.manshar-articles-list {
 
     article {
       margin: 0 auto;
-      font-size: 1.2em;
+      font-size: 1em;
       min-height: 300px !important;
       width: 100%;
       font-weight: 100;
@@ -719,6 +734,7 @@ ul.manshar-articles-list {
         direction: ltr;
         margin: 10px;
         display: block;
+        padding-top: 1em;
       }
 
       blockquote {
@@ -727,11 +743,12 @@ ul.manshar-articles-list {
         margin-right: 20px;
         margin: 36px 0;
         color: #999;
-        font-size: 1.1em;
+        font-size: 0.9em;
       }
 
       p {
-        margin: 36px auto;
+        margin: 1em auto;
+        margin-top: 1.4em;
       }
 
       span {
@@ -771,26 +788,33 @@ ul.manshar-articles-list {
       }
 
       h1 {
-        font-size: 1.75em;
+        font-size: 1.4em;
         padding-top: 20px;
+        text-align: right;
       }
 
       h2 {
-        font-size: 1.4em;
+        font-size: 1.2em;
+        text-align: right;
+        padding-top: 1em;
       }
 
       ul, ol {
-        margin-right: 70px;
+        margin-right: 1.8em;
+        padding-top: 1em;
       }
 
-      p {
-        margin-top: 36px;
+      h3 {
+        font-size: 1.5em;
       }
+
+      a {
+          border-bottom: 1px solid black;
+          color: #333332;
+      }
+
     }
 
-    h3 {
-      font-size: 1.5em;
-    }
 
     .article-actions {
       text-align: center;
@@ -878,8 +902,6 @@ ul.manshar-articles-list {
 }
 
 button {
-  font-family: 'Droid Arabic Naskh', serif !important;
-
   &.action-button {
     font-size: 1.2em;
     padding: 10px 10px;
@@ -918,6 +940,10 @@ button {
       background-color: #ccc;
     }
 
+    span {
+      font-size: .8em;
+    }
+
     .label {
       padding-right: 5px;
     }
@@ -939,11 +965,13 @@ button {
   opacity: 1 !important;
 }
 
-
 .form-div {
 
+  &.center {
+    margin-top: 3em;
+  }
+
   margin: auto;
-  margin-top: 3em;
   width: 300px;
 
   header {
@@ -970,19 +998,27 @@ button {
     text-align: center;
   }
 
-  form{
+  form {
     @include row(table);
-    padding: 10px 0;
 
-    input, .input{
+    label {
+      display: inline-block;
+      vertical-align: top;
+      margin: 5px 0;
+    }
+
+    input, .input {
       display: block;
-      border: 2px solid #ECEBEC;
-      font-size: 1.25em;
-      margin: 20px 3px;
+      border: 1px solid #ECEBEC;
+      font-size: 0.8em;
       padding: 10px;
       border-radius: 5px;
       width: 300px;
       transition: 300ms ease;
+
+      &[type="file"] {
+        font-size: 0.7em;
+      }
 
       &:invalid {
         border-left: 4px solid #ECEBEC;
@@ -1000,11 +1036,29 @@ button {
       }
     }
 
-    button {
-      @include button(simple, #e48184);
-      font-size: 1em;
+    button, a.button {
+      @include button(simple, #CA1504);
+      font-size: 0.8em;
       padding : 10px;
       text-align: center;
+      width: 100%;
+    }
+
+    .actions {
+      text-align: center;
+
+      button {
+        width: 88%;
+      }
+      a {
+        padding: .5em;
+        display: inline-block;
+      }
+    }
+  }
+
+  &.category {
+    img {
       width: 100%;
     }
   }
@@ -1025,6 +1079,13 @@ button {
   }
 }
 
+.admin-dashboard {
+  margin-top: 2em;
+
+  .header-label {
+    margin: 1em 0;
+  }
+}
 
 // Load simple code style for the editor.
 // For rendering the code we use highlight.js

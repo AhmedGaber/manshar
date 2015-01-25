@@ -17,6 +17,9 @@ module.exports = function (grunt) {
   // Time how long tasks take. Can help when optimizing build times
   require('time-grunt')(grunt);
 
+  // Load Google CDN tasks.
+  grunt.loadNpmTasks('grunt-google-cdn');
+
   // Define the configuration for all the tasks
   grunt.initConfig({
 
@@ -24,7 +27,7 @@ module.exports = function (grunt) {
     ngtemplates: {
       webClientApp: {
         cwd: 'app',
-        src: 'views/{,*/}*.html',
+        src: 'views/{,**/}*.html',
         dest: '<%= yeoman.app %>/scripts/cachedTemplates.js'
       }
     },
@@ -317,6 +320,9 @@ module.exports = function (grunt) {
 
     // Replace Google CDN references
     cdnify: {
+      options: {
+        cdn: require('google-cdn-data')
+      },
       dist: {
         html: ['<%= yeoman.dist %>/*.html']
       }
