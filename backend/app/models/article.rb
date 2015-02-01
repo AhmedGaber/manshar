@@ -39,7 +39,7 @@ class Article < ActiveRecord::Base
   end
 
   def next
-    Article.public.popular.where('hotness < ?', hotness).first
+    next_article = Article.public.popular.where('hotness < ?', hotness).first
   end
   
   def time_to_read
