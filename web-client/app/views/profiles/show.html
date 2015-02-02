@@ -4,8 +4,10 @@
   </div>
   <div class="title">
     <img ng-src="{{user.cover_url}}"/>
-    <h1>{{user.name}}</h1>
+    <h1>{{user.name}}</h1> 
     <h4>{{user.bio}}</h4>
+  <!--  <a href={{user.facebook_account}} ng-hide="user.facebook_account == ''" target="_blank">Facebook</a> -->
+  <!--  <a href={{user.twitter_account}} ng-hide="user.twitter_account == ''" target="_blank">Twitter</a>  -->
     <button class="action-button" ng-click="editProfile()" ng-show="currentUser.id == user.id">
       <i class="fa fa-pencil"></i>
     </button>
