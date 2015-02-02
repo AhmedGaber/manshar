@@ -1,6 +1,6 @@
 object @user
 
-attributes :id, :name, :bio, :created_at, :admin, :staff
+attributes :id, :name, :bio, :facebook_account, :twitter_account, :is_verified, :created_at, :admin, :staff
 
 # Don't return cover for listings. We only need these when we are getting the
 # full article. This might change in the future but for now this is causing
