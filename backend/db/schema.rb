@@ -168,9 +168,9 @@ ActiveRecord::Schema.define(version: 20150202134302) do
     t.integer  "recommendations_count",  default: 0
     t.integer  "comments_count",         default: 0
     t.string   "role",                   default: "user"
-    t.string   "facebook_account"        default: ""
-    t.string   "twitter_account"         default: ""
-    t.boolean  "is_verified"             default: false
+    t.string   "facebook_account",       default: ""
+    t.string   "twitter_account",        default: ""
+    t.boolean  "is_verified",            default: false
   end
 
   add_index "users", ["authentication_token"], name: "index_users_on_authentication_token", unique: true, using: :btree

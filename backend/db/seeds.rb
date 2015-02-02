@@ -7,6 +7,9 @@ user = User.create(
   bio: 'وحش في كتابة الأغاني العربية النشهورة.',
   email: 'aabaal@farawleh.com',
   password: 'farawleh',
+  facebook_account: 'http://www.facebook.com',
+  twitter_account: 'http://twitter.com',
+  is_verified: true,
   avatar: fixture_file_upload(Rails.root.join('spec', 'fixtures', 'images', 'test.png'), 'image/png'),
   confirmed_at: Time.now)
 
