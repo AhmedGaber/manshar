@@ -104,7 +104,7 @@ angular.module('webClientApp')
       $analytics.eventTrack('Article Deleted', {
         category: 'Article'
       });
-      $location.path('/');
+      $location.path('/profiles/' + $rootScope.currentUser.id);
     };
 
     var deleteError = function (response) {
