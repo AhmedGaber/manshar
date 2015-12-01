@@ -1,15 +1,18 @@
 class Api::V1::CommentsController < ApplicationController
-
-  before_filter :authenticate_user!, except: [:index]
-  before_filter :load_parent
   respond_to :json
+
+  after_action :verify_authorized, except: [:index]
+  before_action :authenticate_user!, except: [:index]
+  before_action :load_parent
 
   # GET /api/v1/articles/1/comments
   # GET /api/v1/articles/1/comments.json
   # GET /api/v1/users/1/comments
   # GET /api/v1/users/1/comments.json
   def index
-    @comments = policy_scope(@parent.comments)
+    @load_content = preload_content
+    @comments = policy_scope(
+        @parent.comments.preload(preload_content))
     render 'api/v1/comments/index'
   end
 
@@ -18,6 +21,7 @@ class Api::V1::CommentsController < ApplicationController
   def create
     @comment = current_user.comments.new(comment_params)
     @comment.article_id = params[:article_id]
+    @load_content = preload_content
     authorize @comment
     if @comment.save
       ArticleRankingWorker.perform_async(params[:article_id])
@@ -62,6 +66,12 @@ class Api::V1::CommentsController < ApplicationController
 
   def comment_params
     params.require(:comment).permit(:body, :guid)
+  end
+
+  # When the request is for articles comments, preload the user object
+  # otherwise preload the article.
+  def preload_content
+    params[:article_id] ? :user : :article
   end
 
 end

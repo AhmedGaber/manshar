@@ -8,6 +8,7 @@
 // 'test/spec/**/*.js'
 
 var modRewrite = require('connect-modrewrite');
+var compression = require('compression');
 
 module.exports = function (grunt) {
 
@@ -19,6 +20,9 @@ module.exports = function (grunt) {
 
   // Load Google CDN tasks.
   grunt.loadNpmTasks('grunt-google-cdn');
+
+  // Replace assets with cdn url.
+  grunt.loadNpmTasks('grunt-string-replace');
 
   // Define the configuration for all the tasks
   grunt.initConfig({
@@ -44,7 +48,7 @@ module.exports = function (grunt) {
         wrap: '\'use strict\';\n\n<%= __ngModule %>',
         constants: {
           ENV: 'development',
-          API_HOST: 'localhost:3000',
+          API_HOST: '<%= grunt.option("api-host") || process.env.API_HOST || "localhost:3000" %>',
           GA_TRACKING_ID: 'UA-XXXXXXXX-X'
         }
       },
@@ -52,7 +56,7 @@ module.exports = function (grunt) {
         wrap: '\'use strict\';\n\n<%= __ngModule %>',
         constants: {
           ENV: 'production',
-          API_HOST: 'api.manshar.com',
+          API_HOST: '<%= grunt.option("api-host") || process.env.API_HOST || "api.manshar.com" %>',
           GA_TRACKING_ID: 'UA-47379030-1'
         }
       }
@@ -102,17 +106,21 @@ module.exports = function (grunt) {
     connect: {
       options: {
         port: grunt.option('port') || 9000,
-        // Change this to '0.0.0.0' to access the server from outside.
-        hostname: 'localhost',
+        hostname: '0.0.0.0',
         livereload: 35729,
-        middleware: function(connect, options) {
-          var middlewares;
-          middlewares = [];
-          middlewares.push(modRewrite(['^[^\\.]*$ /index.html [L]']));
-          options.base.forEach(function(base) {
-            return middlewares.push(connect['static'](base));
-          });
-          return middlewares;
+        middleware: function (connect, options) {
+          var optBase = (typeof options.base === 'string') ? [options.base] : options.base,
+              middleware = [modRewrite(['!\\.html|\\.js|\\.svg|\\.ttf|\\.woff|\\.woff2|\\.css|\\.png|\\.jpg\\.gif|\\swf$ / [L]']), compression()]
+                .concat(optBase.map(function (path) {
+                  if (path.indexOf('rewrite|') === -1) {
+                    return connect.static(path);
+                  } else {
+                    path = path.replace(/\\/g, '/').split('|');
+                    return connect().use(path[1], connect.static(path[2]));
+                  }
+                }));
+
+          return middleware;
         }
 
       },
@@ -121,6 +129,8 @@ module.exports = function (grunt) {
           open: true,
           base: [
             '.tmp',
+            'rewrite|/bower_components|./bower_components',
+            'rewrite|/app/styles|./app/styles', // for sourcemaps
             '<%= yeoman.app %>'
           ]
         }
@@ -240,6 +250,7 @@ module.exports = function (grunt) {
     // additional tasks can operate on them
     useminPrepare: {
       html: '<%= yeoman.app %>/index.html',
+      css: '<%= yeoman.app %>/styles/{,*/}*.scss',
       options: {
         dest: '<%= yeoman.dist %>'
       }
@@ -257,7 +268,8 @@ module.exports = function (grunt) {
         assetsDirs: ['<%= yeoman.dist %>'],
         patterns: {
           js: [
-            [/(images\/.*?\.(?:gif|jpeg|jpg|png|webp))/gm, 'Update the JS to reference our revved images']
+            [/(images\/.*?\.(?:gif|jpeg|jpg|png|webp))/gm, 'Update the JS to reference our revved images'],
+            [/(styles\/fonts\/.*?\.(?:eot|svg|ttf|woff|woff2))/gm, 'Update the CSS to reference our revved fonts']
           ]
         }
       }
@@ -328,6 +340,42 @@ module.exports = function (grunt) {
       }
     },
 
+    'string-replace': {
+      dist: {
+        files: [{
+          expand: true,
+          cwd: 'dist/',
+          src: ['index.html', 'styles/*.main.css'],
+          dest: 'dist/'
+        }],
+        options: {
+          // TODO(mkhatib): Move this into its own Grunt task.
+          replacements: [{
+            pattern: /['"(]((\/?[\w\d.\-]+\/)+([\w\d@.-]+)\.(?:js|css|gif|webp|png|jpg|jpeg|svg|woff|woff2|eot|ttf).*?)['")]/ig,
+            replacement: function (match, path) {
+              // If path is an absolute URL (starts with http:// or https:// or //)
+              // just return the url itself to keep it as is.
+              if (path.search(/(https?:)?\/\//) === 0) {
+                return match;
+              } else {
+                var cdnBase = grunt.option('cdn-base');
+                if (cdnBase) {
+                  if (path.indexOf('/') !== 0) {
+                    cdnBase += '/';
+                  }
+                  var replacement = match.replace(path, cdnBase + path);
+                  console.log('Replacing: ', match, ' with: ', replacement);
+                  return replacement;
+                } else {
+                  return match;
+                }
+              }
+            }
+          }]
+        }
+      }
+    },
+
     // Copies remaining files to places other tasks can use
     copy: {
       dist: {
@@ -341,7 +389,7 @@ module.exports = function (grunt) {
             '.htaccess',
             'bower_components/**/*',
             'images/{,*/}*.{webp}',
-            'fonts/*'
+            'styles/fonts/*'
           ]
         }, {
           expand: true,
@@ -497,7 +545,8 @@ module.exports = function (grunt) {
     'cssmin',
     'uglify',
     'rev',
-    'usemin'
+    'usemin',
+    'string-replace'
   ]);
 
   grunt.registerTask('default', [

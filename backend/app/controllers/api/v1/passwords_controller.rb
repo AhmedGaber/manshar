@@ -1,19 +1,38 @@
-class Api::V1::PasswordsController < Devise::PasswordsController
+class Api::V1::PasswordsController < DeviseTokenAuth::PasswordsController
+  before_filter :set_user_by_token, :only => [:update]
 
-  respond_to :json
+  # TODO(mkhatib): The only change here is to allow resource with a non-email
+  # provider to change their passwords.
+  def update
+    # make sure user is authorized
+    unless @resource
+      return render json: {
+        success: false,
+        errors: ['Unauthorized']
+      }, status: 401
+    end
 
-  skip_after_filter :verify_authorized
-  skip_before_filter :authenticate_user!
+    # ensure that password params were sent
+    unless password_resource_params[:password] and password_resource_params[:password_confirmation]
+      return render json: {
+        success: false,
+        errors: ['You must fill out the fields labeled "password" and "password confirmation".']
+      }, status: 422
+    end
 
-  def create
-    self.resource = resource_class.send_reset_password_instructions(
-        resource_params)
-
-    if successfully_sent?(resource)
-      render :status => 200, :nothing => true
+    if @resource.update_attributes(password_resource_params)
+      return render json: {
+        success: true,
+        data: {
+          user: @resource,
+          message: "Your password has been successfully updated."
+        }
+      }
     else
-      render :status => 500,
-             :json => { :errors => resource.errors }
+      return render json: {
+        success: false,
+        errors: @resource.errors
+      }, status: 422
     end
   end
 

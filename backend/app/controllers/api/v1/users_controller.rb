@@ -1,12 +1,11 @@
 class Api::V1::UsersController < ApplicationController
   respond_to :json
-  before_filter :authenticate_user!, except: [:index, :show]
-  after_filter :verify_authorized, except: [:index, :show, :update]
+  before_action :authenticate_user!, except: [:index, :show]
 
   # GET /api/v1/users
   # GET /api/v1/users.json
   def index
-    @users = User.top.publishers
+    @users = User.top.publishers.page(params[:page])
     render 'api/v1/users/index'
   end
 

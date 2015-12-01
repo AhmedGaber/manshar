@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe Api::V1::CommentsController do
+describe Api::V1::CommentsController, :type => :controller  do
   render_views
 
   before :each do
@@ -32,8 +32,9 @@ describe Api::V1::CommentsController do
 
       get :index, :article_id => @comment.article_id
       response.should be_success
+      @load_content = :user
       rendered = Rabl.render(
-          [@comment], 'api/v1/comments/index', :view_path => 'app/views')
+          [@comment], 'api/v1/comments/index', :view_path => 'app/views', scope: self)
       response.body.should eq(rendered)
     end
   end
@@ -46,15 +47,17 @@ describe Api::V1::CommentsController do
 
       get :index, :user_id => @comment.user_id
       response.should be_success
+      @load_content = :article
       rendered = Rabl.render(
-          [@comment], 'api/v1/comments/index', :view_path => 'app/views')
+          [@comment], 'api/v1/comments/index', :view_path => 'app/views', scope: self)
       response.body.should eq(rendered)
     end
   end
 
   describe "POST 'articles/:article_id/comments'" do
     it "should create an article comment of the current user" do
-      request.env['HTTP_AUTHORIZATION'] = %Q{Token token="#{@user.authentication_token}"}
+      auth_headers = @user.create_new_auth_token
+      request.headers.merge!(auth_headers)
       post :create, @comment_params
       response.should be_success
       parsed_response = JSON.parse(response.body)
@@ -64,7 +67,6 @@ describe Api::V1::CommentsController do
     end
 
     it "should return 401 when the user is not logged in or unauthorized" do
-      request.env['HTTP_AUTHORIZATION'] = nil
       post :create, :article_id => @comment.article_id
       response.code.should eq('401')
     end
@@ -73,13 +75,15 @@ describe Api::V1::CommentsController do
   describe "DELETE 'articles/:article_id/comments/:id'" do
 
     it "should return 401 when the user is not logged in or unauthorized" do
-      request.env['HTTP_AUTHORIZATION'] = %Q{Token token="#{@user.authentication_token}"}
+      auth_headers = @user.create_new_auth_token
+      request.headers.merge!(auth_headers)
       delete :destroy, :article_id => @comment.article_id, :id => @comment.id
       response.code.should eq('401')
     end
 
     it "should delete an article comment of the current user" do
-      request.env['HTTP_AUTHORIZATION'] = %Q{Token token="#{@comment.user.authentication_token}"}
+      auth_headers = @comment.user.create_new_auth_token
+      request.headers.merge!(auth_headers)
       delete :destroy, :article_id => @comment.article_id, :id => @comment.id
       response.should be_success
 

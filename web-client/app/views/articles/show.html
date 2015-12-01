@@ -1,21 +1,28 @@
-<div class="manshar-article">
-
-  <div class="manshar-article-image-container card" manshar-cover url="{{article.cover_url}}" ng-class="{'manshar-article-nocover': !article.cover_url}">
-    <div class="dimmer" ng-show="article.cover_url"></div>
-    <div class="manshar-article-header tray header">
-      <span class="reading-time" ng-hide="article.loading"> {{article.reading_time | timeToRead }} </span>
-      <div class="title">
-        <h1>{{article.title}}</h1>
-        <h2>{{article.tagline}}</h2>
-      </div>
-    </div>
+<header class="article-header" ng-class="{'nocover': !article.cover_url}">
+  <div class="cover-image" manshar-cover url="{{article.cover_url}}">
   </div>
+  <div class="dimmer" ng-show="article.cover_url"></div>
 
-  <div class="article-content-container tray">
+  <div class="title tray">
+    <span class="reading-time" ng-hide="article.loading"> {{article.reading_time | timeToRead }}
+    </span>
+    <h1>{{article.title}}</h1>
+    <h2>{{article.tagline}}</h2>
+  </div>
+</header>
+
+<div class="manshar-article">
+  <div class="article-container tray">
     <article id="article-body" ng-bind-html="article.body | mansharSanitizer" highlight-code>
     </article>
 
-    <div class="article-meta card-list">
+    <div anchored-comments
+        article="article"
+        guid-elements-container-id="article-body"
+        class="comments-container">
+    </div>
+
+    <div class="article-meta card-list" ng-hide="article.loading">
       <div class="meta-box" ng-show="article.topic">
         <h1 class="header-label">
           <span>نشرت في</span>
@@ -50,7 +57,7 @@
           <div class="meta-text">
             <div class="meta-name">
               <a ng-href="/profiles/{{article.user.id}}">
-                <h3>{{article.user.name}}</h3>
+                <h3>{{article.user.name || 'غير معروف'}}</h3>
               </a>
             </div>
             <div class="meta-more">
@@ -61,7 +68,7 @@
       </div>
     </div>
 
-    <div class="article-actions">
+    <div class="article-actions" ng-hide="article.loading">
       <button class="action-button recommend-button long-form" recommend-button article="article"
           analytics-on="click"
           analytics-event="click"
@@ -70,38 +77,37 @@
           analytics-value="recommend-{{article.id}}">
       </button>
     </div>
-    <div ng-include="'views/partials/_sharing_buttons.html'"></div>
 
-    <div anchored-comments
-        article="article"
-        guid-elements-container-id="article-body"
-        class="comments-container">
+    <div ng-include="'views/partials/_sharing_buttons.html'" ng-hide="article.loading">
     </div>
+</div>
 
-  </div>
 
-  <div class="next-article-container" ng-show="article.next.id">
-    <a href="/articles/{{article.next.id}}">
-      <div class="manshar-article-image-container card" manshar-cover url="{{article.next.original_cover_url}}" ng-class="{'manshar-article-nocover': !article.next.original_cover_url}">
-        <div class="dimmer" ng-show="article.next.original_cover_url"></div>
-        <div class="manshar-article-header tray header">
-          <h5>اقرأ أيضاً</h5>
-          <span class="reading-time" ng-hide="article.loading"> {{article.reading_time | timeToRead }} </span>
-          <div class="title">
-            <h1>{{article.next.title}}</h1>
-            <h2>{{article.next.tagline}}</h2>
-          </div>
+
+<div class="next-article-container" ng-show="article.next.id">
+  <a href="/articles/{{article.next.id}}">
+    <div class="manshar-article-image-container card" manshar-cover url="{{article.next.original_cover_url}}" ng-class="{'manshar-article-nocover': !article.next.original_cover_url}">
+      <div class="dimmer" ng-show="article.next.original_cover_url"></div>
+      <div class="manshar-article-header tray header">
+        <h5>اقرأ أيضاً</h5>
+        <span class="reading-time" ng-hide="article.loading"> {{article.next.reading_time | timeToRead }} </span>
+        <div class="title">
+          <h1>{{article.next.title}}</h1>
+          <h2>{{article.next.tagline}}</h2>
         </div>
       </div>
-    </a>
-  </div>
-
+    </div>
+  </a>
 </div>
 
 <div class="metabar tray">
   <div class="manshar-controls">
-    <button class="action-button" ng-click="editArticle(article.id)" ng-show="isOwner(currentUser, article)">
+    <button class="action-button" ng-click="editArticle(article.id)" ng-show="isOwner(user, article)">
       <i class="fa fa-pencil"></i>
     </button>
   </div>
 </div>
+
+
+
+

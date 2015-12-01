@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('webClientApp')
-  .controller('TopicCtrl', ['$scope', '$rootScope', '$routeParams', '$location', '$filter', 'Category', 'Topic', 'TopicArticle',
-      function ($scope, $rootScope, $routeParams, $location, $filter, Category, Topic, TopicArticle) {
+  .controller('TopicCtrl', ['$scope', '$rootScope', '$routeParams', '$location', '$filter', '$anchorScroll', 'Category', 'Topic', 'TopicArticle',
+      function ($scope, $rootScope, $routeParams, $location, $filter, $anchorScroll, Category, Topic, TopicArticle) {
 
     Topic.get({
       'categoryId': $routeParams.categoryId,
@@ -17,6 +17,8 @@ angular.module('webClientApp')
       $scope.topic = resource;
     });
 
+    $rootScope.forceBar = true;
+
     // Get all articles in this category.
     $scope.articles = [{ loading: true }, { loading: true },
         { loading: true }];
@@ -26,4 +28,27 @@ angular.module('webClientApp')
     }, function(articles) {
       $scope.articles = articles;
     });
+
+    $scope.showCategoriesPicker = function() {
+      $rootScope.$emit('openTopicPicker', {pickOnlyCategory: true});
+    };
+
+    var categorySelectedUnbind = $rootScope.$on('categorySelected',
+        function(event, data) {
+      $location.path('/categories/' + data.category.id);
+    });
+
+    $scope.getCardColor = function(color) {
+      return $filter('darker')(color, -0.4);
+    };
+
+    /**
+     * Make sure to cleanup the binded events and intervals when the user
+     * leaves to another controller.
+     */
+    var onDestroy = function () {
+      categorySelectedUnbind();
+    };
+    $scope.$on('$destroy', onDestroy);
+
   }]);

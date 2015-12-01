@@ -1,11 +1,15 @@
 'use strict';
 
 angular.module('webClientApp')
-  .service('Article', ['$resource', '$http', '$q', 'API_HOST',
-      function ($resource, $http, $q, API_HOST) {
+  .service('Article', ['$resource', '$http', '$q', '$cacheFactory', 'API_HOST',
+      function ($resource, $http, $q, $cacheFactory, API_HOST) {
 
+      var $httpDefaultCache = $cacheFactory.get('$http');
       var baseUrl = '//' + API_HOST + '/api/v1/';
-      var ArticleResource = $resource(baseUrl + 'articles/:articleId');
+      var ArticleResource = $resource(baseUrl + 'articles/:articleId', {}, {
+        get: {cache: true},
+        query: {cache: true, isArray: true}
+      });
 
       /**
        * These configs are needed. AngularJS identity tranformer
@@ -62,16 +66,19 @@ angular.module('webClientApp')
           return delayedObj;
         },
 
-        update: function (params, data, optSuccess, optError) {
+        update: function (params, data, optSuccess, optError, optConfig) {
 
           var delayedObj = {};
-
-          $http.put(baseUrl + 'articles/' + params.articleId,
-                    createFormData(data), configs)
+          var url = baseUrl + 'articles/' + params.articleId;
+          optConfig = optConfig || {};
+          $http.put(url, createFormData(data),
+              angular.extend(optConfig, configs))
             .then(
 
             // Success.
             function (response) {
+              // Update the cache after updating the article.
+              $httpDefaultCache.put(url, response.data);
               if (optSuccess) {
                 optSuccess(response.data);
               }

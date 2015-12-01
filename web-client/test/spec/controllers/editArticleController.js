@@ -9,6 +9,28 @@ describe('Controller: EditArticleCtrl', function () {
 
   beforeEach(function() {
 
+    module(function($provide) {
+      $provide.service('$auth', function() {
+        this.apiUrl = jasmine.createSpy('apiUrl');
+        this.initialize = jasmine.createSpy('initialize');
+        this.authenticate = jasmine.createSpy('authenticate');
+        this.validateUser = jasmine.createSpy('validateUser');
+        this.submitRegistration = jasmine.createSpy('submitRegistration');
+        this.submitLogin = jasmine.createSpy('submitLogin');
+        this.signOut = jasmine.createSpy('signOut');
+        this.requestPasswordReset = jasmine.createSpy('requestPasswordReset');
+        this.updatePassword = jasmine.createSpy('updatePassword');
+        this.updateAccount = jasmine.createSpy('updateAccount');
+        this.destroyAccount = jasmine.createSpy('destroyAccount');
+        this.retrieveData = jasmine.createSpy('retrieveData');
+        this.getConfig = jasmine.createSpy('getConfig').and.returnValue({
+          tokenFormat: '',
+          parseExpiry: jasmine.createSpy('parseExpiry')
+        });
+        this.getExpiry = jasmine.createSpy('getExpiry');
+      });
+    });
+
 
     // Mock confirm.
     mock = {
@@ -65,7 +87,7 @@ describe('Controller: EditArticleCtrl', function () {
     // Edit Article.
     httpBackend.expectGET(apiBase + 'articles/' + articleData.id).respond(articleData);
     routeParams.articleId = articleData.id;
-    rootScope.currentUser = {id: 1};
+    rootScope.user = {id: 1};
     createController();
     httpBackend.flush();
     expect(scope.article.title).toBe('Hello World.');
@@ -75,7 +97,7 @@ describe('Controller: EditArticleCtrl', function () {
   it('should redirect unauthorized user to view', function () {
     httpBackend.expectGET(apiBase + 'articles/1').respond(articleData);
     routeParams.articleId = articleData.id;
-    rootScope.currentUser = {id: 2};
+    rootScope.user = {id: 2};
     createController();
     httpBackend.flush();
     expect(location.path()).toBe('/articles/1');
@@ -83,16 +105,16 @@ describe('Controller: EditArticleCtrl', function () {
 
   it('should listen to logged out event and unbind it when destroyed', function () {
     // Edit Article.
-    spyOn(scope, '$on').andCallFake(function (event) {
+    spyOn(scope, '$on').and.callFake(function (event) {
       expect(event).toBe('$destroy');
     });
     httpBackend.expectGET(apiBase + 'articles/' + articleData.id).respond(articleData);
     routeParams.articleId = articleData.id;
-    rootScope.currentUser = {id: 1};
+    rootScope.user = {id: 1};
     createController();
     httpBackend.flush();
     rootScope.$emit('user.loggedOut');
-    expect(location.path()).toBe('/');
+    expect(location.path()).toBe('');
 
     expect(scope.$on).toHaveBeenCalled();
   });
@@ -104,7 +126,7 @@ describe('Controller: EditArticleCtrl', function () {
       createController();
       httpBackend.flush();
 
-      spyOn(ArticleModel, 'update').andCallFake(function(params, data, success) {
+      spyOn(ArticleModel, 'update').and.callFake(function(params, data, success) {
         success({id: 2, published: true});
       });
       scope.saveArticle(scope.article);
@@ -114,7 +136,7 @@ describe('Controller: EditArticleCtrl', function () {
 
     it('should set error on scope', function () {
       createController();
-      spyOn(ArticleModel, 'update').andCallFake(function(params, data, success, error) {
+      spyOn(ArticleModel, 'update').and.callFake(function(params, data, success, error) {
         error({});
       });
       scope.saveArticle(scope.article);
@@ -124,20 +146,21 @@ describe('Controller: EditArticleCtrl', function () {
 
   describe('EditArticleCtrl.deleteArticle', function () {
     it('should delete an article when the user confirm', function () {
+      rootScope.user = {id: 1};
       createController();
-      spyOn(mock, 'confirm').andCallFake(function() {return true;});
-      spyOn(ArticleModel, 'delete').andCallFake(function(params, data, success) {
+      spyOn(mock, 'confirm').and.callFake(function() {return true;});
+      spyOn(ArticleModel, 'delete').and.callFake(function(params, data, success) {
         success();
       });
       scope.deleteArticle({id: 1});
       expect(mock.confirm).toHaveBeenCalled();
       expect(ArticleModel.delete).toHaveBeenCalled();
-      expect(location.path()).toBe('/');
+      expect(location.path()).toBe('/profiles/1');
     });
 
     it('should not delete an article when the user does not confirm', function () {
       createController();
-      spyOn(mock, 'confirm').andReturn(false);
+      spyOn(mock, 'confirm').and.returnValue(false);
       spyOn(ArticleModel, 'delete');
       scope.deleteArticle({id: 1});
       expect(mock.confirm).toHaveBeenCalled();
@@ -146,8 +169,8 @@ describe('Controller: EditArticleCtrl', function () {
 
     it('should set error on scope', function () {
       createController();
-      spyOn(mock, 'confirm').andReturn(true);
-      spyOn(ArticleModel, 'delete').andCallFake(function(params, data, success, error) {
+      spyOn(mock, 'confirm').and.returnValue(true);
+      spyOn(ArticleModel, 'delete').and.callFake(function(params, data, success, error) {
         error({});
       });
       scope.deleteArticle({id: 1});
@@ -165,15 +188,13 @@ describe('Controller: EditArticleCtrl', function () {
       routeParams.articleId = 1;
       createController();
       httpBackend.flush();
-      spyOn(mock, 'confirm').andCallFake(function() {return true;});
+      spyOn(mock, 'confirm').and.callFake(function() {return true;});
       scope.cancel();
       expect(mock.confirm).not.toHaveBeenCalled();
       expect(location.path()).toBe('/');
 
-      httpBackend.expectGET(apiBase + 'articles/1').respond({title: 'Hello World.'});
       routeParams.articleId = 1;
       createController();
-      httpBackend.flush();
       scope.article.title = 'Bye World.';
       scope.cancel();
       expect(mock.confirm).toHaveBeenCalled();
@@ -192,7 +213,7 @@ describe('Controller: EditArticleCtrl', function () {
       location.path('/articles/new');
       createController();
       scope.article.title = 'hello';
-      spyOn(mock, 'confirm').andCallFake(function() {return false;});
+      spyOn(mock, 'confirm').and.callFake(function() {return false;});
       scope.cancel();
       expect(mock.confirm).toHaveBeenCalled();
       expect(location.path()).toBe('/articles/new');
@@ -201,7 +222,7 @@ describe('Controller: EditArticleCtrl', function () {
     it('should cancel before a new changed article when confirming', function () {
       createController();
       scope.article.title = 'hello';
-      spyOn(mock, 'confirm').andCallFake(function() {return true;});
+      spyOn(mock, 'confirm').and.callFake(function() {return true;});
       scope.cancel();
       expect(mock.confirm).toHaveBeenCalled();
       expect(location.path()).toBe('/');

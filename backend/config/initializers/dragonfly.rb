@@ -4,7 +4,10 @@ require 'dragonfly'
 Dragonfly.app.configure do
   plugin :imagemagick
 
-  protect_from_dos_attacks true
+  # TODO: Dragonfly changed their SHA algorithm and broke old images
+  # make sure to revert this back to true once we figure out how to support
+  # old images urls.
+  verify_urls false
   secret ENV['DRAGONFLY_SECRET']
 
   url_format "/media/:job/:sha/:name"
@@ -12,10 +15,26 @@ Dragonfly.app.configure do
   # Keep the images cached for 60 days.
   response_header "Cache-Control", "public, max-age=5184000"
 
+  # List of allowed file paths when using fetch_file (strings or regexps)
+  fetch_file_whitelist [
+    /public/
+  ]
+  whitelist = [
+    /www\.manshar\.com/,
+    /api\.manshar\.com/,
+  ]
+  if not ENV["CDN_DOMAIN"].nil? and not ENV["CDN_DOMAIN"].empty?
+    whitelist.push(/#{Regexp.escape(ENV["CDN_DOMAIN"])}/)
+  end
+
+  fetch_url_whitelist whitelist
+
   if Rails.env == 'test'
     datastore :memory
   elsif Rails.env == 'production'
-    url_host 'http://dsi4xlu0p7t9b.cloudfront.net'
+    if not ENV["CDN_DOMAIN"].nil? and ENV["CDN_DOMAIN"].empty?
+     url_host 'http://#{ENV["CDN_DOMAIN"]}' if ENV["CDN_DOMAIN"]
+    end
     datastore :s3,
       bucket_name: ENV['S3_BUCKET_NAME'],
       access_key_id: ENV['AWS_ACCESS_KEY_ID'],

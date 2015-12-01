@@ -11,10 +11,10 @@ tmp
 bundler_stubs/*
 vendor/bundle/*
 .pryrc
+public/system/
 public/uploads/
 public/assets/
 
-config/database.yml
 .env
 .env.production
 
@@ -25,3 +25,4 @@ dist
 .sass-cache
 vendor/assets/bower_components
 
+dragonfly.log

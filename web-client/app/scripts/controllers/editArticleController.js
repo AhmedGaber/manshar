@@ -9,26 +9,28 @@ angular.module('webClientApp')
         ' نشرها مجدداً بالضغط على نشر. هل تود نقل المقال للمسودات؟');
 
     var lastSavedArticle = {};
-
+    $rootScope.forceBar = true;
     /**
      * Checks if the article has been changed since the last time it was saved.
      * @return {boolean} True if the article has been changed.
      */
     var isDirty = function () {
-      // Check if the article has been updated since last edited.
       var maybeUpdatedArticle = angular.copy($scope.article);
-      // To avoid updating the $scope.article model just remove updated_at
-      // to make sure the updated_at is not compared when checking for changes.
-      delete maybeUpdatedArticle.updated_at;
-      delete lastSavedArticle.updated_at;
-      return !angular.equals(maybeUpdatedArticle, lastSavedArticle);
+      var attrs = ['body', 'cover_url', 'tagline', 'title', 'topic'];
+      for (var i = 0; i < attrs.length; i++) {
+        if (!angular.equals(
+            maybeUpdatedArticle[attrs[i]], lastSavedArticle[attrs[i]])) {
+          return true;
+        }
+      }
+      return false;
     };
 
     /**
      * If the current user is not the owner redirect the user to view.
      */
     var authorizeUser = function (article) {
-      if (!$rootScope.isOwner($rootScope.currentUser, article)) {
+      if (!$rootScope.isOwner($rootScope.user, article)) {
         $location.path('/articles/' + article.id);
       }
     };
@@ -58,7 +60,6 @@ angular.module('webClientApp')
         });
       });
     }
-
 
     var updateSuccess = function (resource) {
       lastSavedArticle = angular.copy(resource);
@@ -104,7 +105,7 @@ angular.module('webClientApp')
       $analytics.eventTrack('Article Deleted', {
         category: 'Article'
       });
-      $location.path('/profiles/' + $rootScope.currentUser.id);
+      $location.path('/profiles/' + $rootScope.user.id);
     };
 
     var deleteError = function (response) {
@@ -124,6 +125,10 @@ angular.module('webClientApp')
      * @param {boolean} silent Whether to flash the controls or not.
      */
     $scope.saveArticle = function(article, published, silent) {
+      // Clear autosave interval before sitting published.
+      if(autoSavePromise && published) {
+        $interval.cancel(autoSavePromise);
+      }
       article.published = published;
       var formError = $scope.articleForm.$error;
       if(published && formError && formError.required) {
@@ -142,7 +147,7 @@ angular.module('webClientApp')
 
         Article.update(
             { 'articleId': article.id }, { article: article },
-            updateSuccess, updateError);
+            updateSuccess, updateError, {ignoreLoadingBar: !published});
       }
     };
 
@@ -193,16 +198,20 @@ angular.module('webClientApp')
 
 
     var topicSelectedUnbind = $rootScope.$on('topicSelected', function(event, data) {
-      $scope.article.topic_id = data.topic.id;
-      $scope.article.topic = data.topic;
+      if (data.topic && data.topic.id) {
+        $scope.article.topic = data.topic;
+        $scope.article.topic_id = data.topic.id;
+        $scope.article.category = data.topic.category;
+        $scope.article.category_id = data.topic.category.id;
+      }
       $scope.article.published_at = publishingAfterTopicPicked;
       $scope.saveArticle($scope.article, publishingAfterTopicPicked);
     });
 
     /**
-     * When the user logout while in edit mdoe redirect the user,
+     * When the user logout while in edit mode redirect the user,
      */
-    var loggedOutUnbined = $rootScope.$on('user.loggedOut', function () {
+    var loggedOutUnbined = $rootScope.$on('auth:logout-success', function () {
       if ($scope.article.published) {
         var location = '/articles/' + $routeParams.articleId;
         $location.path(location);

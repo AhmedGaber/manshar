@@ -13,17 +13,42 @@ angular.module('webClientApp', [
   'ngRoute',
   'AppConfig',
   'truncate',
-  'snap',
   'angulartics',
   'angulartics.google.analytics',
   'angularFileUpload',
-  'angular-loading-bar'
+  'angular-loading-bar',
+  'ipCookie',
+  'ng-token-auth'
 ])
   /**
    * Routing.
    */
   .config(['$routeProvider',
       function ($routeProvider) {
+
+    /**
+     * Checks proper access to the route and reject it if unauthenticated.
+     */
+    var checkAccess = {
+      load: ['$q', '$location', '$rootScope', '$auth', '$route', 'LoginService',
+          function($q, $location, $rootScope, $auth, $route, LoginService) {
+        var isPublic = $route.current.isPublic;
+        var isAdmin = $route.current.isAdmin;
+        var deferred = $q.defer();
+        var callback = function() {
+          if(LoginService.isAuthorized(isPublic, isAdmin)) {
+            deferred.resolve();
+          } else {
+            deferred.reject();
+            $rootScope.$broadcast('showLoginDialog', {
+              'prev': $location.path()
+            });
+          }
+        };
+        $auth.validateUser().then(callback, callback);
+        return deferred.promise;
+      }]
+    };
 
 
     $routeProvider
@@ -32,83 +57,103 @@ angular.module('webClientApp', [
         templateUrl: 'views/main.html',
         controller: 'MainCtrl',
         title: 'منصة النشر العربية',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/login', {
         templateUrl: 'views/login.html',
         controller: 'LoginCtrl',
         title: 'تسجيل الدخول',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/signup', {
         templateUrl: 'views/signup.html',
         controller: 'SignupCtrl',
         title: 'مستخدم جديد',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/articles/new', {
         templateUrl: 'views/articles/edit.html',
         controller: 'NewArticleCtrl',
         title: 'مقال جديد',
-        isPublic: false
+        isPublic: false,
+        resolve: checkAccess
       })
 
       .when('/articles/:articleId/edit', {
         templateUrl: 'views/articles/edit.html',
         controller: 'EditArticleCtrl',
-        isPublic: false
+        isPublic: false,
+        resolve: checkAccess
       })
 
       .when('/articles/:articleId', {
         templateUrl: 'views/articles/show.html',
         controller: 'ArticleCtrl',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
-      .when('/accounts/reset_password/:resetToken?', {
+      .when('/accounts/reset_password', {
         templateUrl: 'views/accounts/reset_password.html',
-        controller: 'PasswordController',
-        isPublic: true
+        controller: 'ResetPasswordController',
+        isPublic: true,
+        resolve: checkAccess
+      })
+
+      .when('/accounts/update_password', {
+        templateUrl: 'views/accounts/update_password.html',
+        controller: 'UpdatePasswordController',
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/profiles/:userId', {
         templateUrl: 'views/profiles/show.html',
         controller: 'ProfileCtrl',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/profiles/:userId/edit', {
         templateUrl: 'views/profiles/edit.html',
         controller: 'EditProfileCtrl',
-        isPublic: false
+        isPublic: false,
+        resolve: checkAccess
       })
 
       .when('/categories/:categoryId', {
         templateUrl: 'views/categories/show.html',
         controller: 'CategoryCtrl',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/categories/:categoryId/topics/:topicId', {
         templateUrl: 'views/topics/show.html',
         controller: 'TopicCtrl',
-        isPublic: true
+        isPublic: true,
+        resolve: checkAccess
       })
 
       .when('/admin', {
         templateUrl: 'views/admin/dashboard.html',
         isPublic: false,
-        isAdmin: true
+        isAdmin: true,
+        resolve: checkAccess
       })
 
       .when('/admin/manage/categories', {
         templateUrl: 'views/admin/manage/categories.html',
         controller: 'ManageCategoriesCtrl',
         isPublic: false,
-        isAdmin: true
+        isAdmin: true,
+        resolve: checkAccess
       })
 
       .otherwise({
@@ -133,7 +178,7 @@ angular.module('webClientApp', [
       'responseError': function(response) {
         if (response.status === 401) {
           var previous = $location.path();
-          $rootScope.$broadcast('unauthenticated', {'prev': previous});
+          $rootScope.$broadcast('showLoginDialog', {'prev': previous});
           return $q.reject(response);
         }
         else {
@@ -142,12 +187,31 @@ angular.module('webClientApp', [
       }
     };
   }])
+
+  /**
+   * Sets up authentication for ng-token-auth.
+   */
+  .config(['$authProvider', 'API_HOST', function($authProvider, API_HOST) {
+    $authProvider.configure({
+      apiUrl: '//' + API_HOST,
+      omniauthWindowType: 'newWindow',
+      confirmationSuccessUrl:  'http://' + window.location.host + '/login',
+      passwordResetSuccessUrl: ('http://' + window.location.host +
+                                '/accounts/update_password'),
+      authProviderPaths: {
+        facebook: '/auth/facebook',
+        gplus:   '/auth/gplus'
+      },
+    });
+  }])
+
   /**
    * Intercept every http request and check for 401 Unauthorized
    * error. Clear the current user and redirect to /login page.
    */
   .config(['$httpProvider', '$locationProvider', function ($httpProvider, $locationProvider) {
     $httpProvider.interceptors.push('unAuthenticatedInterceptor');
+    $httpProvider.defaults.headers.common['Accept-Encoding'] = 'gzip';
 
     $locationProvider.html5Mode(true).hashPrefix('!');
   }])
@@ -172,8 +236,8 @@ angular.module('webClientApp', [
   /**
    * Everytime the route change check if the user need to login.
    */
-  .run(['$location', '$rootScope', '$analytics', 'LoginService', 'GA_TRACKING_ID',
-      function ($location, $rootScope, $analytics, LoginService, GA_TRACKING_ID) {
+  .run(['$location', '$rootScope', '$analytics', '$auth', 'LoginService', 'User', 'GA_TRACKING_ID',
+      function ($location, $rootScope, $analytics, $auth, LoginService, User, GA_TRACKING_ID) {
 
     // ga is the Google analytics global variable.
     if (window.ga) {
@@ -206,7 +270,7 @@ angular.module('webClientApp', [
      * @param {string} optPrev Optional previous path to go back to after login.
      */
     $rootScope.showLoginDialog = function(optPrev) {
-      $rootScope.$broadcast('unauthenticated', {
+      $rootScope.$broadcast('showLoginDialog', {
         'prev': optPrev
       });
     };
@@ -220,36 +284,59 @@ angular.module('webClientApp', [
      * @returns {boolean} true if the user is the owner of the resource.
      */
     $rootScope.isOwner = function (user, resource) {
+      var id = user && parseInt(user.id);
       return (!!user && !!resource && !!resource.user &&
-              user.id === resource.user.id);
+              id === resource.user.id);
     };
 
-    // If the user is already logged in init the auth headers.
-    // This also makes isLoggedIn and currentUser available on rootScope.
-    LoginService.init();
+    var checkAccess = function(event, next, current) {
 
-    /**
-     * If the route to be accessed is private make sure the user is authenticated
-     * otherwise, broadcast 'unauthenticated' to show login modal.
-     */
-    $rootScope.$on('$routeChangeStart', function(event, next, current) {
-      if (!LoginService.isAuthorized(next.isPublic, next.isAdmin)) {
+      /**
+       * First load to the AngularJS the user might have not been loaded
+       * so need to call the callback after validateUser promise is resolved.
+       */
+      var firstLoadCallback = function() {
+        if (!LoginService.isAuthorized(next.isPublic, next.isAdmin)) {
+          $location.path('/login').search('prev', $location.path());
+        }
+      };
+
+      // If this is the first load of the site.
+      if(!current) {
+        $auth.validateUser().then(firstLoadCallback, firstLoadCallback);
+      }
+      else if(!LoginService.isAuthorized(next.isPublic, next.isAdmin)) {
         event.preventDefault();
         // Show the dialog instead of redirecting for all navigations.
         // Except first time landing on the site on protected page.
         if (current) {
-          $rootScope.$broadcast('unauthenticated', {
-            'prev': next.$$route.originalPath
+          $rootScope.$broadcast('showLoginDialog', {
+            'prev': $location.path()
           });
-        } else {
-          $location.path('/login').search('prev', next.$$route.originalPath);
         }
       }
+    };
+
+    /**
+     * If the route to be accessed is private make sure the user is authenticated
+     * otherwise, broadcast 'showLoginDialog' to show login modal.
+     */
+    $rootScope.$on('$routeChangeStart', function(event, next, current) {
+      checkAccess(event, next, current);
     });
 
     $rootScope.$on('$routeChangeSuccess', function (event, current) {
       $rootScope.page.title = current.$$route.title || $rootScope.page.title;
       $rootScope.page.url = document.location.href;
     });
+
+    var getLoggedInUserProfile = function(event, data) {
+      User.get({'userId': data.id}, function(user) {
+        angular.extend($rootScope.user, user);
+      });
+    };
+
+    $rootScope.$on('auth:validation-success', getLoggedInUserProfile);
+    $rootScope.$on('auth:login-success', getLoggedInUserProfile);
 
   }]);

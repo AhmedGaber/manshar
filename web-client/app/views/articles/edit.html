@@ -1,85 +1,80 @@
-<form name="articleForm" class="manshar-article">
+<form class="article-edit-form" name="articleForm">
+  <header class="article-header" ng-class="{'nocover': !article.cover_url}">
+    <div class="cover-image" manshar-cover url="{{article.cover_url}}"></div>
+    <div class="dimmer" ng-show="article.cover_url"></div>
 
-    <div class="manshar-article-image-container card" ng-class="{'manshar-article-nocover': !article.cover_url}" manshar-cover url="{{article.cover_url}}">
-      <div class="dimmer" ng-show="article.cover_url"></div>
+    <div class="title tray">
+      <input
+        type="file"
+        manshar-file
+          file-model="article.cover"
+          preview-url="article.cover_url"
+        analytics-on="click"
+          analytics-event="Pick Article Cover"
+      />
 
-      <div class="manshar-article-header tray header">
+      <h1
+        name="myWidget"
+        class="manshar-editor"
+        grande-editor
+          rtl="true"
+          placeholder="عنوان المقال"
+          mode="inline"
+          max-length="100"
+          ng-model="article.title"
+          required
+        >
+      </h1>
 
-        <div class="title">
-          <input
-            type="file"
-            manshar-file
-              file-model="article.cover"
-              preview-url="article.cover_url"
-            analytics-on="click"
-              analytics-event="Pick Article Cover"
-          />
-
-          <h1
-            name="myWidget"
-            class="manshar-editor"
-            grande-editor
-              rtl="true"
-              placeholder="عنوان المقال"
-              mode="inline"
-              max-length="100"
-              ng-model="article.title"
-              required
-            >
-          </h1>
-
-          <h2
-            class="manshar-editor"
-            grande-editor
-              rtl="true"
-              placeholder="عنوان المقال الفرعي"
-              mode="inline"
-              max-length="200"
-              ng-model="article.tagline"
-            >
-          </h2>
-
-        </div>
-      </div>
-
+      <h2
+        class="manshar-editor"
+        grande-editor
+          rtl="true"
+          placeholder="عنوان المقال الفرعي"
+          mode="inline"
+          max-length="200"
+          ng-model="article.tagline"
+        >
+      </h2>
     </div>
+  </header>
 
-  <div class="article-content-container tray">
-    <article
-      class="manshar-editor"
-      grande-editor
-        rtl="true"
-        placeholder="اكتب مقالك هنا"
-        mode="rich"
-        ng-model="article.body"
-        required
-      >
-    </article>
+  <div class="manshar-article">
+    <div class="article-container tray">
+      <article
+        class="manshar-editor"
+        grande-editor
+          rtl="true"
+          placeholder="اكتب مقالك هنا"
+          mode="rich"
+          ng-model="article.body"
+          required
+        >
+      </article>
 
-
-    <div class="article-meta card-list" ng-show="article.topic.title || article.published_at">
-      <div class="meta-box">
-        <h1 class="header-label">
-          <span>نشرت في</span>
-        </h1>
-        <a ng-click="changeTopic()">
-          <div class="meta-details card">
-            <p class="meta-thumb">
-              <img ng-src="{{article.topic.category.image_thumb_url}}" ng-show="article.topic.category.image_thumb_url"/>
-            </p>
-            <div class="meta-text">
-              <div class="meta-name">
-                <h3>{{article.topic.title || 'اختر موضوع لنشر تحته'}}</h3>
-              </div>
-              <div class="meta-more">
-                {{article.topic.category.title}}
+      <div class="article-meta card-list" ng-show="article.topic.title || article.published_at">
+        <div class="meta-box">
+          <h1 class="header-label">
+            <span>نشرت في</span>
+          </h1>
+          <a ng-click="changeTopic()">
+            <div class="meta-details card">
+              <p class="meta-thumb">
+                <img ng-src="{{article.topic.category.image_thumb_url}}" ng-show="article.topic.category.image_thumb_url"/>
+              </p>
+              <div class="meta-text">
+                <div class="meta-name">
+                  <h3>{{article.topic.title || 'اختر موضوع لنشر تحته'}}</h3>
+                </div>
+                <div class="meta-more">
+                  {{article.topic.category.title}}
+                </div>
               </div>
             </div>
-          </div>
-        </a>
+          </a>
+        </div>
       </div>
     </div>
-
   </div>
 </form>
 

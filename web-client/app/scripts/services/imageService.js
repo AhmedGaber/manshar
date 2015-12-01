@@ -5,7 +5,10 @@ angular.module('webClientApp')
       function ($resource, $http, $q, $upload, API_HOST) {
 
       var baseUrl = '//' + API_HOST + '/api/v1/';
-      var ImageResource = $resource(baseUrl + 'images/:imageId');
+      var ImageResource = $resource(baseUrl + 'images/:imageId', {}, {
+        get: {cache: true},
+        query: {cache: true, isArray: true}
+      });
 
       /**
        * These configs are needed. AngularJS identity tranformer
@@ -39,6 +42,19 @@ angular.module('webClientApp')
         save: function (data, optSuccess, optError, optProgress) {
 
           var delayedObj = {};
+
+          // TODO(mkhatib): Until we figure out a way to rename files either
+          // on the frontend or backend to not include non-english characters
+          // we'll have to tell the user to fix this instead.
+          var filename = data.image.asset && data.image.asset.name;
+          if (filename && filename.match(/[^\x00-\x7F]+/ig, 'X')) {
+            if (optError) {
+              optError(
+                  'اسم الملف غير صالح. الرجاء تغيير اسم الملف' +
+                  ' لكي تحتوي أحرف إنجليزية فقط.');
+            }
+            return delayedObj;
+          }
 
           var file = data.image.asset;
           delete data.image.asset;

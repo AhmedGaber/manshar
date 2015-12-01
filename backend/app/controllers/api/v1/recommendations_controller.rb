@@ -1,16 +1,19 @@
 class Api::V1::RecommendationsController < ApplicationController
-
-  skip_before_filter :authenticate_user!, only: [:index]
-
-  before_filter :load_parent
   respond_to :json
+
+  before_action :load_parent
+  before_action :authenticate_user!, except: [:index]
+  after_action :verify_authorized, except: [:index]
+
 
   # GET /articles/:article_id/recommendations
   # GET /articles/:article_id/recommendations.json
   # GET /users/:user_id/recommendations
   # GET /users/:user_id/recommendations.json
   def index
-    @recommendations = policy_scope(@parent.recommendations)
+    @load_content = preload_content
+    @recommendations = policy_scope(
+        @parent.recommendations.preload(preload_content))
     render 'api/v1/recommendations/index'
   end
 
@@ -47,6 +50,12 @@ class Api::V1::RecommendationsController < ApplicationController
     elsif params[:article_id]
       @parent =  Article.find(params[:article_id])
     end
+  end
+
+  # When the request is for articles recommendations, preload the user object
+  # otherwise preload the article.
+  def preload_content
+    params[:article_id] ? :user : :article
   end
 
 end

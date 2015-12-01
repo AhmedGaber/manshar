@@ -12,5 +12,9 @@ web-client/dist
 
 # This is where dragonfly upload images in Development Env.
 backend/public/system/
+backend/config/database.yml
 
 *.rdb
+
+# Cloud nine stuff
+.c9revisions/
