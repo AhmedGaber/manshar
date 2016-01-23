@@ -7,8 +7,11 @@
 // use this if you want to recursively match all subfolders:
 // 'test/spec/**/*.js'
 
+var packageJson = require('./package.json');
+var path = require('path');
 var modRewrite = require('connect-modrewrite');
 var compression = require('compression');
+var swPrecache = require('sw-precache');
 
 module.exports = function (grunt) {
 
@@ -26,6 +29,17 @@ module.exports = function (grunt) {
 
   // Define the configuration for all the tasks
   grunt.initConfig({
+    swPrecache: {
+      dev: {
+        handleFetch: false,
+        rootDir: 'app'
+      },
+      dist: {
+        handleFetch: true,
+        rootDir: 'dist',
+        importScripts: ['workers/sw-toolbox-workers.js'],
+      }
+    },
 
     // Help caches angular templates to avoid errors during testing.
     ngtemplates: {
@@ -105,8 +119,12 @@ module.exports = function (grunt) {
     // The actual grunt server settings
     connect: {
       options: {
+        protocol: 'http',
+        key: grunt.file.read('utils/dev/certs/server.key').toString(),
+        cert: grunt.file.read('utils/dev/certs/server.crt').toString(),
+        ca: grunt.file.read('utils/dev/certs/ca.crt').toString(),
         port: grunt.option('port') || 9000,
-        hostname: '0.0.0.0',
+        hostname: grunt.option('host') || '0.0.0.0',
         livereload: 35729,
         middleware: function (connect, options) {
           var optBase = (typeof options.base === 'string') ? [options.base] : options.base,
@@ -263,7 +281,10 @@ module.exports = function (grunt) {
         '<%= yeoman.dist %>/views/partials/{,*/}*.html'
       ],
       css: ['<%= yeoman.dist %>/styles/{,*/}*.css'],
-      js: ['<%= yeoman.dist %>/scripts/{,*/}*.js'],
+      js: [
+        '<%= yeoman.dist %>/scripts/{,*/}*.js',
+        '<%= yeoman.dist %>/manifest.json'
+      ],
       options: {
         assetsDirs: ['<%= yeoman.dist %>'],
         patterns: {
@@ -385,7 +406,7 @@ module.exports = function (grunt) {
           cwd: '<%= yeoman.app %>',
           dest: '<%= yeoman.dist %>',
           src: [
-            '*.{ico,png,txt}',
+            '*.{ico,png,txt,js,json}',
             '.htaccess',
             'bower_components/**/*',
             'images/{,*/}*.{webp}',
@@ -465,9 +486,23 @@ module.exports = function (grunt) {
     //     }
     //   }
     // },
-    // concat: {
-    //   dist: {}
-    // },
+    concat: {
+      options: {
+        sourceMap: true
+      },
+      dist: {
+        src: [
+          // TODO
+          '<%= yeoman.app %>/bower_components/sw-toolbox/sw-toolbox.js',
+          // '<%= yeoman.app %>/scripts/helpers/simple-db.js',
+          // '<%= yeoman.app %>/scripts/workers/offline-analytics.js',
+          // '<%= yeoman.app %>/scripts/workers/offline-session-update.js',
+          // '<%= yeoman.app %>/scripts/workers/push-notifications.js',
+          '<%= yeoman.app %>/workers/*.js',
+        ],
+        dest: '<%= yeoman.dist %>/workers/sw-toolbox-workers.js',
+      },
+    },
 
     // Test settings
     karma: {
@@ -491,6 +526,60 @@ module.exports = function (grunt) {
         }
       }
     }
+  });
+
+
+  function writeServiceWorkerFile(rootDir, handleFetch, importScripts, callback) {
+    var config = {
+      cacheId: packageJson.name,
+      importScripts: importScripts,
+      // If handleFetch is false (i.e. because this is called from swPrecache:dev), then
+      // the service worker will precache resources but won't actually serve them.
+      // This allows you to test precaching behavior without worry about the cache preventing your
+      // local changes from being picked up during the development cycle.
+      handleFetch: handleFetch,
+      logger: grunt.log.writeln,
+      staticFileGlobs: [
+        rootDir + '/*.html',
+        rootDir + '/favicon.ico',
+        rootDir + '/styles/*.*.css',
+        rootDir + '/styles/fonts/*.*.{eot,svg,ttf,woff,woff2}',
+        rootDir + '/bower_components/angular-file-upload/dist/angular-file-upload-shim.min.js',
+        rootDir + '/scripts/*.*.js',
+        rootDir + '/images/*.{png,jpg,jpeg,gif,webp,svg}'
+      ],
+      remoteResources: [
+        'https://ajax.googleapis.com/ajax/libs/angularjs/1.3.17/angular.min.js',
+        'https://yandex.st/highlightjs/8.0/highlight.min.js',
+        'https://yandex.st/highlightjs/8.0/styles/default.min.css',
+        'https://fonts.googleapis.com/earlyaccess/droidarabicnaskh.css',
+        'https://fonts.gstatic.com/ea/droidarabicnaskh/v7/DroidNaskh-Regular.woff2',
+        'https://fonts.gstatic.com/ea/droidarabicnaskh/v7/DroidNaskh-Regular.woff',
+        'https://fonts.gstatic.com/ea/droidarabicnaskh/v7/DroidNaskh-Regular.ttf',
+        'https://fonts.gstatic.com/ea/droidarabicnaskh/v7/DroidNaskh-Bold.woff2',
+        'https://fonts.gstatic.com/ea/droidarabicnaskh/v7/DroidNaskh-Bold.woff',
+        'https://fonts.gstatic.com/ea/droidarabicnaskh/v7/DroidNaskh-Bold.ttf',
+      ],
+      stripPrefix: rootDir + '/',
+      // verbose defaults to false, but for the purposes of this demo, log more.
+      // verbose: true
+    };
+
+    swPrecache.write(path.join(rootDir, 'service-worker.js'), config, callback);
+  }
+
+  grunt.registerMultiTask('swPrecache', function() {
+    var done = this.async();
+    var rootDir = this.data.rootDir;
+    var handleFetch = this.data.handleFetch;
+    var importScripts = this.data.importScripts;
+
+    writeServiceWorkerFile(rootDir, handleFetch, importScripts, function(error) {
+      if (error) {
+        grunt.fail.warn(error);
+      }
+      done();
+    });
   });
 
 
@@ -546,12 +635,15 @@ module.exports = function (grunt) {
     'uglify',
     'rev',
     'usemin',
-    'string-replace'
+    'string-replace',
+    'swPrecache:dist'
   ]);
 
   grunt.registerTask('default', [
     'newer:jshint',
-    'test',
+    // TODO(mkhatib): Re-enable tests after getting back to focusing on writing
+    // better tests.
+    // 'test',
     'build'
   ]);
 };

@@ -6,6 +6,21 @@ elif [[ "$TRAVIS_BRANCH" == "" ]]
 then
   echo "TRAVIS_BRANCH variable is empty. This util is only to be used by Travis CI."
   exit 1
+elif [[ "$TRAVIS_BRANCH" == "staging" ]]
+then
+  echo "On Staging... Deploying to staging.manshar.com..."
+  wget -qO- https://toolbelt.heroku.com/install-ubuntu.sh | sh
+  echo "Host heroku.com" >> ~/.ssh/config
+  echo "   StrictHostKeyChecking no" >> ~/.ssh/config
+  echo "   CheckHostIP no" >> ~/.ssh/config
+  echo "   UserKnownHostsFile=/dev/null" >> ~/.ssh/config
+  heroku keys:clear
+  yes | heroku keys:add
+
+  git config user.email "deploy-bot@manshar.me"
+  git config user.name "Manshar Deploy Bot"
+
+  $MANSHAR_HOME/utils/deploy.sh --name manshar-staging
 elif [[ "$TRAVIS_BRANCH" != "master" ]]
 then
   echo "Not master. No Deploy to do."
@@ -33,7 +48,10 @@ else
   sed '/web-client\/dist/d' .gitignore > .gitignore.new && mv .gitignore.new .gitignore
   # Sass gem is needed to build web client.
   sudo gem install sass
-  cd $MANSHAR_HOME/web-client/ && grunt --cdn-base=//d32rdl4awdotlf.cloudfront.net && cd $MANSHAR_HOME
+  # Note(mkhatib): Trying to drop CDN base for static content since we're now using
+  # Cloudflare which will be caching without the need for this.
+  # cd $MANSHAR_HOME/web-client/ && grunt --cdn-base=//d32rdl4awdotlf.cloudfront.net && cd $MANSHAR_HOME
+  cd $MANSHAR_HOME/web-client/ && grunt && cd $MANSHAR_HOME
   git add --all && git commit -a -m 'Deploying Web Client Dist...'
   yes | git push web-client-heroku `git subtree split --prefix web-client/dist tmp-deploy`:master --force
 

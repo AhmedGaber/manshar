@@ -1,12 +1,14 @@
 'use strict';
 
 angular.module('webClientApp')
-  .controller('ManageCategoriesCtrl', ['$scope', '$routeParams', '$window', 'Category', '$analytics',
-      function ($scope, $routeParams, $window, Category, $analytics) {
+  .controller('ManageCategoriesCtrl', ['$scope', 'Category', '$analytics',
+      function ($scope, Category, $analytics) {
 
     // Holder for creating new categories.
     $scope.category = {};
-    $scope.categories = Category.query();
+    $scope.categories = Category.query({all: true}, function(category) {
+      console.log('category', category);
+    });
     $scope.error = null;
     $scope.errorMessages = {};
 
@@ -19,12 +21,24 @@ angular.module('webClientApp')
     };
 
     $scope.deleteCategory = function(category) {
-      if ($window.confirm('هل أنت متأكد من حذف الفئة؟')) {
-        Category.delete({'categoryId': category.id}, function () {
-          var index = $scope.categories.indexOf(category);
-          $scope.categories.splice(index, 1);
-        });
-      }
+      swal({
+        title: 'هل أنت متأكد من حذف الفئة؟',
+        text: 'لن تستطيع استعادة الفئة المحذوفة.',
+        type: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#DD6B55',
+        confirmButtonText: 'نعم متأكد وأريد حذف الفئة.',
+        cancelButtonText: 'لا، الغ الحذف.',
+        closeOnConfirm: false,
+        closeOnCancel: false },
+      function(isConfirm){
+        if (isConfirm) {
+          Category.delete({'categoryId': category.id}, function () {
+            var index = $scope.categories.indexOf(category);
+            $scope.categories.splice(index, 1);
+          });
+        }
+      });
     };
 
     var updateSuccess = function() {

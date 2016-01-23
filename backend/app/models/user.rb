@@ -14,6 +14,7 @@ class User < ActiveRecord::Base
   acts_as_messageable
 
   has_many :articles, dependent: :destroy
+  has_many :total_stats, dependent: :destroy
   has_many :images, dependent: :destroy
   has_many :recommendations, dependent: :destroy
   has_many :comments, dependent: :destroy
@@ -22,7 +23,10 @@ class User < ActiveRecord::Base
   dragonfly_accessor :avatar do
     default ENV['DEFAULT_AVATAR']
     storage_options do |attachment|
-      { headers: {"x-amz-acl" => "public-read-write"} }
+      {
+        root_path: 'users/avatars/',
+        headers: {'x-amz-acl' => 'public-read-write'}
+      }
     end
   end
   abs_url_for :avatar
@@ -32,7 +36,7 @@ class User < ActiveRecord::Base
   end
 
   def drafts
-    articles.drafts.recents
+    articles.drafts.recently_updated
   end
 
   def admin

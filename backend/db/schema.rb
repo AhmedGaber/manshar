@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150215055322) do
+ActiveRecord::Schema.define(version: 20151227080837) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -36,6 +36,8 @@ ActiveRecord::Schema.define(version: 20150215055322) do
     t.string   "topic_title"
     t.string   "category_color"
     t.integer  "category_id"
+    t.text     "json_model"
+    t.string   "user_avatar_url"
   end
 
   create_table "categories", force: :cascade do |t|
@@ -153,6 +155,19 @@ ActiveRecord::Schema.define(version: 20150215055322) do
     t.integer  "category_id",                null: false
     t.datetime "created_at"
     t.datetime "updated_at"
+  end
+
+  create_table "total_stats", force: :cascade do |t|
+    t.integer "article_id",                        null: false
+    t.integer "user_id"
+    t.string  "article_title"
+    t.integer "page_views_count",      default: 0
+    t.integer "reads_count",           default: 0
+    t.integer "comments_count",        default: 0
+    t.integer "recommendations_count", default: 0
+    t.integer "facebook_shares_count", default: 0
+    t.integer "twitter_shares_count",  default: 0
+    t.integer "plus_shares_count",     default: 0
   end
 
   create_table "users", force: :cascade do |t|

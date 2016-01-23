@@ -1,8 +1,8 @@
 'use strict';
 
 angular.module('webClientApp')
-  .controller('SignupCtrl', ['$scope', '$location', '$routeParams', '$analytics', 'SignupService',
-      function ($scope, $location, $routeParams, $analytics, SignupService) {
+  .controller('SignupCtrl', ['$scope', '$analytics', 'SignupService',
+      function ($scope, $analytics, SignupService) {
 
     $scope.error = null;
     $scope.errorMessages = {};
@@ -16,6 +16,8 @@ angular.module('webClientApp')
         category: 'User'
       });
 
+      fbq('track', 'CompleteRegistration');
+
       $scope.flash = 'تم إرسال رسالة إلى بريدك الإلكتروني لتفعيل حسابك.';
       $scope.flashNote = '(تأكد من مجلد السبام)';
     };
@@ -25,8 +27,19 @@ angular.module('webClientApp')
         category: 'User',
         label: angular.toJson(response.errors)
       });
-      $scope.error = 'حدث خطأ ما.'; // General form error.
-      $scope.errorMessages = response.errors; // Detailed error message from backend.
+
+      var emailInUseMsg = 'This email address is already in use';
+      var message = (
+          response.errors && response.errors[0] ||
+          response.errors && response.errors.full_messages && response.errors.full_messages[0] || '');
+      if (message.indexOf(emailInUseMsg) !== -1) {
+        $scope.error = 'هذا الإيميل مستخدم من قبل، الرجاء تسجيل الدخول.';
+      } else {
+        $scope.error = message || 'حدث خطأ ما. الرجاء المحاولة مرة أخرى';
+      }
+
+      $scope.flash = null;
+      console.log(response.errors); // Detailed error message from backend.
     };
 
   }]);

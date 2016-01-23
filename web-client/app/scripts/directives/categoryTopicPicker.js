@@ -1,17 +1,20 @@
 'use strict';
 
 angular.module('webClientApp')
-  .directive('categoryTopicPicker', ['$rootScope', '$window', '$location', 'Category', 'Topic',
-      function ($rootScope, $window, $location, Category, Topic) {
+  .directive('categoryTopicPicker', ['$rootScope', '$location', 'Category', 'Topic',
+      function ($rootScope, $location, Category, Topic) {
 
     return {
       restrict: 'A',
       templateUrl: 'views/directives/categoryTopicPicker.html',
-      link: function (scope) {
+      scope: {
+        visible: '='
+      },
+      link: function (scope, element) {
         scope.selectedCategory = null;
         scope.categories = Category.query();
         scope.topics = [];
-        scope.allowCreateTopics = false;
+        // scope.allowCreateTopics = false;
         scope.visible = false;
 
         scope.selectCategory = function(category) {
@@ -22,6 +25,7 @@ angular.module('webClientApp')
             scope.selectedCategory = null;
           } else {
             scope.topics = Topic.query({categoryId: category.id});
+            element.find('input')[0].focus();
           }
         };
 
@@ -38,7 +42,7 @@ angular.module('webClientApp')
         };
 
         var createTopicError = function() {
-          $window.alert('حدث خطأ ما، الرجاء المحاولة مرة أخرى.');
+          swal('حدث خطأ ما', 'الرجاء المحاولة مرة ثانية', 'error');
         };
 
         scope.saveTopic = function(topic) {
@@ -49,7 +53,7 @@ angular.module('webClientApp')
             }, createTopicSuccess, createTopicError);
           }
           else {
-            $window.alert('موضوع المقال لا يجب ان يتعدى ثلاث كلمات');
+            swal('موضوع المقال لا يجب ان يتعدى ثلاث كلمات', 'الرجاء تعديل الموضوع','error');
           }
         };
 
@@ -65,11 +69,9 @@ angular.module('webClientApp')
         };
 
         $rootScope.$on('openTopicPicker', function(event, data) {
-          if (data.category) {
+          if (data && data.category) {
             scope.selectCategory(getCategoryById(data.category.id));
           }
-          scope.allowCreateTopics = data.allowCreateTopics;
-          scope.pickOnlyCategory = data.pickOnlyCategory;
           scope.visible = true;
         });
       }
