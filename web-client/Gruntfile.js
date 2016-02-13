@@ -119,7 +119,7 @@ module.exports = function (grunt) {
     // The actual grunt server settings
     connect: {
       options: {
-        protocol: 'http',
+        protocol: grunt.option('secure') ? 'https' : 'http',
         key: grunt.file.read('utils/dev/certs/server.key').toString(),
         cert: grunt.file.read('utils/dev/certs/server.crt').toString(),
         ca: grunt.file.read('utils/dev/certs/ca.crt').toString(),
@@ -303,8 +303,11 @@ module.exports = function (grunt) {
           expand: true,
           cwd: '<%= yeoman.app %>/images',
           src: '{,*/}*.{png,jpg,jpeg,gif}',
-          dest: '<%= yeoman.dist %>/images'
-        }]
+          dest: '<%= yeoman.dist %>/images',
+        }],
+        options: {
+          cache: false
+        }
       }
     },
     svgmin: {

@@ -394,6 +394,22 @@ angular.module('webClientApp', [
           }]
         }
       })
+      .state('app.updatePassword', {
+        url: 'accounts/update_password/',
+        views: {
+        'content@': {
+            templateUrl: 'views/accounts/update_password.html',
+            controller: 'UpdatePasswordController'
+          }
+        },
+        resolve: {
+          requireNoAuth: ['$auth', '$state', function($auth, $state) {
+            return $auth.validateUser().catch(function() {
+              $state.go('app.articles.list', {'order': 'popular'});
+            }).$promise;
+          }]
+        }
+      })
       .state('app.admin', {
         url: 'admin/',
         views: {
@@ -427,30 +443,30 @@ angular.module('webClientApp', [
       .state('app.redirects', {})
       .state('app.redirects.profiles', {
         url: 'profiles/:userId/',
-        onEnter: function ($state, $stateParams) {
+        onEnter: ['$state', '$stateParams', function ($state, $stateParams) {
           $state.transitionTo('app.publishers.profile.user.published', {
             userId: $stateParams.userId
           });
-        }
+        }]
       })
       .state('app.redirects.categories', {
         url: 'categories/:categoryId/',
-        onEnter: function ($state, $stateParams) {
+        onEnter: ['$state', '$stateParams', function ($state, $stateParams) {
           $state.transitionTo('app.categories.articles.list', {
             categoryId: $stateParams.categoryId,
             order: 'popular'
           });
-        }
+        }]
       })
       .state('app.redirects.topics', {
         url: 'categories/:categoryId/topics/:topicId/',
-        onEnter: function ($state, $stateParams) {
+        onEnter: ['$state', '$stateParams', function ($state, $stateParams) {
           $state.transitionTo('app.categories.topic.articles.list', {
             categoryId: $stateParams.categoryId,
             topicId: $stateParams.topicId,
             order: 'popular'
           });
-        }
+        }]
       })
       .state('app.404', {
         url: '404/',
@@ -496,13 +512,13 @@ angular.module('webClientApp', [
     $authProvider.configure({
       apiUrl: '//' + API_HOST,
       omniauthWindowType: 'newWindow',
-      confirmationSuccessUrl:  '//' + window.location.host + '/login',
-      passwordResetSuccessUrl: ('//' + window.location.host +
+      confirmationSuccessUrl:  'https://' + window.location.host + '/login',
+      passwordResetSuccessUrl: ('https://' + window.location.host +
                                 '/accounts/update_password'),
       authProviderPaths: {
         facebook: '/auth/facebook',
         gplus:   '/auth/gplus'
-      },
+      }
     });
   }])
 
@@ -550,7 +566,7 @@ angular.module('webClientApp', [
       ga('create', GA_TRACKING_ID);
     }
 
-    $rootScope.linkPrefix = '//' + document.location.host;
+    $rootScope.linkPrefix = 'https://' + document.location.host;
 
     /**
      * Holds data about page-wide attributes. Like pages title.
