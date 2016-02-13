@@ -1,175 +1,36 @@
 # Contributing to Manshar
-> Before you start working on a task, make sure it's assigned to you on the [issue tracker](https://www.pivotaltracker.com/n/projects/985678). You either assign it to yourself, or the project lead assigns it to you.
 
-## Install the environment
-
-The following steps will help you prepare your environment and get the project running on your local machine. However, if you just want to work on the front-end part of Manshar, you can reuse the existing dev backend `api-dev.manshar.com` and not have to install the whole backend and its dependencies including the database. Please refer to the wiki page [Contributing to Web Client](https://github.com/manshar/manshar/wiki/Contributing-to-Web-Client) for more details.
-
-### Install [Homebrew](http://brew.sh/) (OS X)
-
-Homebrew is the best package manager out there for OS X.
-
-```sh
-ruby -e "$(curl -fsSL https://raw.github.com/Homebrew/homebrew/go/install)"
-```
-
-### Install Ruby
-
-We recommend you to use one of the Ruby version control. We mainly use Ruby 2.0.
-
-#### Install rbenv a Ruby version manager (with Homebrew)
-
-```sh
-brew install openssl
-
-brew install ruby-build
-
-brew install rbenv # Follow the instructions after installing rbenv
-
-brew install rbenv-gemset
-
-brew install redis # Make sure to also run redis afterwards.
-```
-
-#### Install Ruby 2.0
-
-```sh
-rbenv install 2.0.0-p247
-```
-
-### [Install Postgres, NodeJS, and PhantomJS] (https://github.com/manshar/manshar/wiki/Installing-Postgres,-NodeJS,-and-PhantomJS)
-
-
-## Fork Manshar
-
-Fork the repository to your account then clone it to your machine
-
-```sh
-git clone https://github.com/USERNAME/manshar.git manshar && cd manshar
-```
-
-## Setup the development configurations
-
-```sh
-cp backend/.env.sample backend/.env
-
-cp backend/config/database.yml.sample backend/config/database.yml
-```
-
-## Install the project dependencies
-
-```sh
-# Installing backend dependencies.
-
-cd backend
-
-gem install bundler
-
-bundle install
-
-# Installing web-client dependencies.
-
-cd web-client
-
-sudo gem install sass
-
-npm install
-
-bower install
-```
-
-## Setup the database
-
-```sh
-# Create postgres role and leave the password empty when prompted.
-createuser -P -s -e postgres
-
-cd backend
-
-bundle exec  rake db:create
-
-bundle exec rake db:migrate
-
-# Optional: Seed the Database with some test data.
-bundle exec rake db:seed
-```
-
-## Run the app.
-
-```sh
-# Running the backend.
-
-cd backend
-
-rails s
-
-# Running the web-client.
-cd web-client
-
-grunt serve
-```
-
-## Run tests
-
-```sh
-# Backend Tests.
-
-cd backend
-
-rspec spec
-
-# Web-client tests.
-
-cd web-client
-
-# This will also show you the test coverage.
-grunt test
-
-# If you want to dive deeper into the code coverage to see what is not covered.
-# You can run the following command and go to manshar/web-client/coverage/
-# Folder and copy paste the folder name after the localhost:5555 that opened.
-# You'll end up with something like: localhost:5555/PhantomJS 1.9.2 (Mac OS X)
-grunt coverage
-```
-
-## HowTo keep in sync your git repository for Manshar
-
-We recommend you to add `manshar/manshar` as upstream
-
-```sh
-git remote add upstream https://github.com/manshar/manshar.git
-
-git fetch upstream
-
-git merge upstream/master
-```
-
-## HowTo add a feature to Manshar
-
-> Before that, **\*try*** to have your repository synced.
-
-Let's say you want to contribute to XYZ feature, for your local repository create a branch for this feature
-
-```sh
-# you are on master
-
-git branch xyz
-
-git checkout xyz
-```
-
-After implementing the feature and its test cases, push it to your github account
-
-If your edits touch the web-client code, make sure to also run ```grunt``` to build the web-client. And make sure
-it builds successfully without errors or jshints warnings (try to fix jshints warnings).
-
-
-```sh
-git add .
-
-git commit -m "feature XYZ"
-
-git push origin xyz
-```
-
-Then open a pull request so we get notified for the feature you've implemented.
+So, you'll give us a hand building [Manshar](http://www.manshar.com)? AWESOME! Here, you can find some guidelines that should help you get started quickly and easily. If you need any help, please email us at core@manshar.com or [our mailing list](https://groups.google.com/d/forum/manshar-core). We're always happy to answer your questions!
+
+
+##How we work?
+We mostly use [Pivotal Tracker](https://www.pivotaltracker.com/n/projects/985678) for tracking all the things we still need done, and we use [Slack](https://slack.com) to do all communications manshar-related. Read our [Governance Model](https://github.com/manshar/manshar/wiki/Governance-Model) to learn more.
+
+##How to contribute?
+Whatever your area of expertise is, there are lots of ways you can contribute, here are some things you can help us with:
+
+ - Use the app to write your own story! If you haven't already, [try it out](https://www.manshar.com/signup/)! Understanding the app will help you take the first step. Really!
+ - You can report an issue
+ - Work on the backend
+ - Help us with the UX and UI
+ - Or write some tests
+ - Maybe you can write the documentation with us?
+ - Or help us with the graphics and design...
+ - Tell us your opinions and feature suggestions
+ - Or help us spread the word!
+
+## Technologies we use:
+Manshar is built using [Ruby on Rails](http://rubyonrails.org/) on the backend and [AngualrJS](https://angularjs.org/) on the frontend. We are also using [PostgreSQL](http://www.postgresql.org/) database and [PhantomJS](http://phantomjs.org/) as a part of testing the javascript application. **Frontend and backend are completely separated to give you a better chance at contributing to the project if you're familiar with just one technology or if you want to contribute to one of them without wanting to deal with the other**.
+
+##Getting Started
+Excited to get started? Yeah, we too! Here's step by step what you need to do:
+
+1. Check out our [Governance Model](https://github.com/manshar/manshar/wiki/Governance-Model)  and join our [mailing list](https://groups.google.com/forum/#!forum/manshar-core)
+2. [Prepare your environment](https://github.com/manshar/manshar/wiki/Preparing-The-Environment) 
+3. [Check how to run the app on your local machine](https://github.com/manshar/manshar/wiki/Running-the-app) 
+4. [Understand the project structure](https://github.com/manshar/manshar/wiki/Project-Code-Structure) 
+5. [Read our code style guide](https://github.com/manshar/manshar/wiki/Style-Guide)
+6. pick a task from our [issue tracker](https://www.pivotaltracker.com/n/projects/985678)
+7. Write your awesome code
+8. [Add a feature to Manshar](https://github.com/manshar/manshar/wiki/Adding-a-feature-to-Manshar) and submit a pull request
+9. Keep coding with us!
